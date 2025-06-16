@@ -1,13 +1,13 @@
-name: Deploy Django App to Azuree
+name: Deploy Django OTP App to Azure
 
 on:
   push:
     branches:
-      - main  # Or your default branch
+      - main  # Change if your default branch is different
 
 env:
-  AZURE_WEBAPP_NAME: test-app13            # 👈 Replace with your App Service name
-  AZURE_WEBAPP_PACKAGE_PATH: './login'              # Root folder
+  AZURE_WEBAPP_NAME: test-app13                # 👈 Replace with your Azure App Service name
+  AZURE_WEBAPP_PACKAGE_PATH: ./login           # Django app folder containing manage.py
   PYTHON_VERSION: '3.9'
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -25,15 +25,19 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run collectstatic (optional)
+      - name: Collect static files
         run: |
+          cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
           python manage.py collectstatic --noinput
 
-      - name: Zip application
-        run: zip -r app.zip .
+      - name: Zip application folder
+        run: |
+          cd ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+          zip -r ../app.zip .
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
