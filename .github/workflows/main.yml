@@ -3,11 +3,11 @@ name: Deploy Django OTP App to Azure
 on:
   push:
     branches:
-      - main  # Change if your default branch is different
+      - main  # Change this if your default branch is something else
 
 env:
-  AZURE_WEBAPP_NAME: test-app13                # 👈 Replace with your Azure App Service name
-  AZURE_WEBAPP_PACKAGE_PATH: ./login           # Django app folder containing manage.py
+  AZURE_WEBAPP_NAME: test-app13                 # 👈 Replace with your Azure App Service name
+  AZURE_WEBAPP_PACKAGE_PATH: './login/login'   # 👈 Actual location of manage.py
   PYTHON_VERSION: '3.9'
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Set up Python
