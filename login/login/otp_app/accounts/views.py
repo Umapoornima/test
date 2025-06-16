@@ -1,45 +1,42 @@
-from django.shortcuts import render, redirect
-from .forms import UserForm, OTPForm
-from .models import UserOTP
 import random
-from twilio.rest import Client
-import random
+import requests
+import os
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 
+def generate_otp():
+    return str(random.randint(100000, 999999))
 
-def send_otp(mobile):
-    otp = str(random.randint(100000, 999999))
-    print(f"Sending OTP {otp} to {mobile}")
-    return otp
+def send_otp_via_msg91(mobile_number, otp):
+    url = "https://control.msg91.com/api/v5/otp"
+    headers = {
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "authkey": os.getenv("MSG91_AUTH_KEY"),
+        "template_id": os.getenv("MSG91_TEMPLATE_ID"),
+        "mobile": f"91{mobile_number}",
+        "otp": otp
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    return response.json()
 
+@csrf_exempt
+def send_otp(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        mobile_number = data.get("mobile")
 
-def register(request):
-    if request.method == 'POST':
-        form = UserForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            mobile = form.cleaned_data['mobile']
-            otp = send_otp(mobile)
-            UserOTP.objects.create(username=username, mobile=mobile, otp=otp)
-            request.session['mobile'] = mobile
-            return redirect('verify_otp')
-    else:
-        form = UserForm()
-    return render(request, 'register.html', {'form': form})
+        if not mobile_number:
+            return JsonResponse({"error": "Mobile number is required"}, status=400)
 
+        otp = generate_otp()
+        response = send_otp_via_msg91(mobile_number, otp)
 
-def verify_otp(request):
-    mobile = request.session.get('mobile')
-    if not mobile:
-        return redirect('register')
-    if request.method == 'POST':
-        form = OTPForm(request.POST)
-        if form.is_valid():
-            entered_otp = form.cleaned_data['otp']
-            user = UserOTP.objects.filter(mobile=mobile).last()
-            if user and user.otp == entered_otp:
-                return render(request, 'success.html', {'user': user})
-            else:
-                return render(request, 'verify_otp.html', {'form': form, 'error': 'Invalid OTP'})
-    else:
-        form = OTPForm()
-    return render(request, 'verify_otp.html', {'form': form})
+        request.session["otp"] = otp
+        request.session["mobile"] = mobile_number
+
+        return JsonResponse({"message": "OTP sent successfully", "msg91_response": response})
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
