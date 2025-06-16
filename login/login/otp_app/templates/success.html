@@ -1,0 +1,15 @@
+
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+    <title>Success</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<div class="container">
+    <h2>Welcome {{ user.username }}</h2>
+    <p>Your mobile <strong>{{ user.mobile }}</strong> has been verified.</p>
+</div>
+</body>
+</html>
