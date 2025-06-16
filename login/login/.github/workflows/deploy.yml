@@ -1,4 +1,4 @@
-name: Deploy Django App to Azure
+name: Deploy Django App to Azuree
 
 on:
   push:
